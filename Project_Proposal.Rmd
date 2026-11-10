@@ -12,7 +12,7 @@ Daisy Wu, Zongheng Li, Westbrook Long
 We meet at every Tuesday in person and we will use Teams to communicate online.
 
 # Questions of interest
-Is there a difference in mean systolic blood pressure between current cigarette smokers and non-current smokers among U.S. adults aged 18 and older?
+Is there a difference in mean systolic blood pressure between ever cigarette smokers and never smokers among U.S. adults aged 18 and older?
 
 # Link to download: 
 ```{r}
