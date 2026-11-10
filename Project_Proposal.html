@@ -374,7 +374,7 @@ ever-smokers and never-smokers among U.S. adults aged 18 and older?</p>
 <pre class="r"><code>install.packages(&quot;nhanesA&quot;, repos = &quot;https://cloud.r-project.org&quot;)</code></pre>
 <pre><code>## 
 ## The downloaded binary packages are in
-##  /var/folders/p2/gsv_6gvn0jx8wqc_tm1l6r9c0000gn/T//RtmpqPfzit/downloaded_packages</code></pre>
+##  /var/folders/_7/dg45wbxs25jgm4xp9xmbfbrc0000gn/T//Rtmp07bUwn/downloaded_packages</code></pre>
 <pre class="r"><code>library(nhanesA)
 
 bpx &lt;- nhanes(&quot;BPX_J&quot;)
@@ -426,22 +426,27 @@ population.</p>
 <h1>An outline of a graph related to your question of interest.</h1>
 <div id="graph1-side-to-side-boxplot" class="section level2">
 <h2>Graph1: side-to-side boxplot</h2>
-<p>x-axis: ever-smoke VS never smoke(SMQ020) y-axis: systolic blood
-pressure/mmHg (BPXSY1-3) purpose: compare the mean, spread, skew and
-outliers of blood pressure between the two groups</p>
+<p>x-axis: ever-smoke VS never smoke(SMQ020)</p>
+<p>y-axis: systolic blood pressure/mmHg (BPXSY1-3)</p>
+<p>purpose: compare the mean, spread, skew and outliers of blood
+pressure between the two groups</p>
 </div>
 <div id="graph2-null-distribution-histogram" class="section level2">
 <h2>Graph2: null distribution histogram</h2>
-<p>x-axis: difference in sample mean between ever-smoke and never smoke
-y-axis: frequency purpose: gain p-value by using a resampling hypothesis
-test to determine whether there was a significant difference in average
-blood pressure between the two groups.</p>
+<p>x-axis: difference in sample mean between ever-smoke and never
+smoke</p>
+<p>y-axis: frequency</p>
+<p>purpose: gain p-value by using a resampling hypothesis test to
+determine whether there was a significant difference in average blood
+pressure between the two groups.</p>
 </div>
 <div id="graph3-histogram-of-the-bootstrap" class="section level2">
 <h2>Graph3: histogram of the bootstrap</h2>
 <p>x-axis: difference in resample mean between ever-smoke and never
-smoke y-axis: frequency purpose: obtain a confidence interval for the
-difference in means, giving the range of plausible values.</p>
+smoke</p>
+<p>y-axis: frequency</p>
+<p>purpose: obtain a confidence interval for the difference in means,
+giving the range of plausible values.</p>
 </div>
 </div>
 <div id="the-type-of-inference-method" class="section level1">

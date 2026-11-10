@@ -22,7 +22,6 @@ library(nhanesA)
 bpx <- nhanes("BPX_J")
 smq <- nhanes("SMQ_J")
 
-
 ```
 
 # DATA DESCRIPTION
@@ -58,18 +57,27 @@ Because NHANES over-samples some groups and we do not use its sampling weights, 
 
 # An outline of a graph related to your question of interest.
 ## Graph1: side-to-side boxplot
+
 x-axis: ever-smoke VS never smoke(SMQ020)
+
 y-axis: systolic blood pressure/mmHg (BPXSY1-3)
+
 purpose: compare the mean, spread, skew and outliers of blood pressure between the two groups
 
 ## Graph2: null distribution histogram
+
 x-axis: difference in sample mean between ever-smoke and never smoke
+
 y-axis: frequency
+
 purpose: gain p-value by using a resampling hypothesis test to determine whether there was a significant difference in average blood pressure between the two groups.
 
 ## Graph3: histogram of the bootstrap 
+
 x-axis: difference in resample mean between ever-smoke and never smoke
+
 y-axis: frequency
+
 purpose: obtain a confidence interval for the difference in means, giving the range of plausible values.
 
 
