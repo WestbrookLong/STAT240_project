@@ -1,0 +1,88 @@
+---
+title: "Project Proposal"
+output: html_document
+date: "2026-11-03"
+---
+
+
+# Group members
+Daisy Wu, Zongheng Li, Westbrook Long
+
+# Group communication
+We meet at every Tuesday in person and we will use Teams to communicate online.
+
+# Questions of interest
+Is there a difference in mean systolic blood pressure between current cigarette smokers and non-current smokers among U.S. adults aged 18 and older?
+
+# Link to download: 
+```{r}
+install.packages("nhanesA", repos = "https://cloud.r-project.org")
+library(nhanesA)
+
+bpx <- nhanes("BPX_J")
+smq <- nhanes("SMQ_J")
+
+
+```
+
+# DATA DESCRIPTION
+
+## Who recorded the data and how?
+
+The data come from the 2017–2018 National Health and Nutrition Examination Survey (NHANES), run by the CDC’s National Center for Health Statistics.
+
+Participants were randomly selected to represent the U.S. population. They answered health questions in a home interview and had physical measurements taken by trained staff at a mobile exam center.
+
+We combined three NHANES files (blood pressure, smoking, and demographics), linked by participant ID.
+
+**Data source:** https://wwwn.cdc.gov/nchs/nhanes/
+
+## Key Variables
+
+- **Systolic blood pressure (`BPXSY1`–`BPXSY3`)**: Up to three readings (mmHg), taken after the participant sat quietly for 5 minutes. We average them into one value per person, our outcome.
+
+- **Smoking status (`SMQ020`)**: "Have you smoked at least 100 cigarettes in your life?" (Yes/No). This defines our two groups, ever-smokers and never-smokers.
+
+- **Age (`RIDAGEYR`)**: Used to keep only adults aged 20 and older.
+
+## What Does a Row Represent?
+
+One adult aged 20+ who took part in NHANES 2017–2018, with their average systolic blood pressure and smoking status.
+
+## What Is the Population?
+
+Civilian U.S. adults aged 20 and older living in households (excluding the military, prisons, and nursing homes).
+
+Because NHANES over-samples some groups and we do not use its sampling weights, our sample may not perfectly reflect this population.
+
+
+# An outline of a graph related to your question of interest.
+## Graph1: side-to-side boxplot
+x-axis: ever-smoke VS never smoke(SMQ020)
+y-axis: systolic blood pressure/mmHg (BPXSY1-3)
+purpose: compare the mean, spread, skew and outliers of blood pressure between the two groups
+
+## Graph2: null distribution histogram
+x-axis: difference in sample mean between ever-smoke and never smoke
+y-axis: frequency
+purpose: gain p-value by using a resampling hypothesis test to determine whether there was a significant difference in average blood pressure between the two groups.
+
+## Graph3: histogram of the bootstrap 
+x-axis: difference in resample mean between ever-smoke and never smoke
+y-axis: frequency
+purpose: obtain a confidence interval for the difference in means, giving the range of plausible values.
+
+
+# The type of inference method
+We plan to use inference on the difference of two population means to investigate whether there is a statistically significant difference in mean systolic blood pressure between current smokers and never-smokers.
+
+We will use a two-sample t-test to compare the mean systolic blood pressure of the two groups and construct a 95% confidence interval for the difference in population means.
+
+
+
+
+
+
+
+
+
