@@ -1,0 +1,240 @@
+---
+title: "Report-statistical analysis"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+
+
+
+# Statistical Analysis
+
+## Parameters of interest
+
+Our research question is: Is there a difference in mean systolic blood pressure between ever-smokers and never-smokers among U.S. adults aged 18 and older?
+
+
+Let:
+
+mu_E = the population mean systolic blood pressure of ever-smokers.
+
+mu_N = the population mean systolic blood pressure of never-smokers.
+
+The parameter of interest is **mu_E-mu_N**, which is the difference in population means.
+
+
+## Inference method and hypotheses
+
+We use a **resampling hypothesis test at alpha = 0.05**, **together with a 95% bootstrap confidence interval**, to examine the difference in population mean systolic blood pressure between ever-smokers and never-smokers. We then use a **Welch two-sample t-test and its 95% confidence interval** to assess whether the results are consistent with those obtained from the resampling methods.
+
+So we have H0:mu_E-mu_N = 0, H1:mu_E-mu_N != 0
+
+
+## Assumption checks
+We assess the assumptions of the two-sample T-test using the sample sizes and distributions of systolic blood pressure in each group.
+
+```{r}
+library(tidyverse)
+library(haven)
+demo <- read_xpt("data/DEMO_J.XPT")
+bpx  <- read_xpt("data/BPX_J.XPT")
+smq  <- read_xpt("data/SMQ_J.XPT")
+
+# Data tidying 
+demo_s <- demo %>% select(SEQN, RIDAGEYR)
+bpx_s <- bpx %>% select(SEQN, BPXSY1, BPXSY2, BPXSY3, BPXSY4)
+smq_s <- smq %>% select(SEQN, SMQ020)
+
+merged <- demo_s %>%
+  inner_join(bpx_s, by = "SEQN") %>%
+  inner_join(smq_s, by = "SEQN")
+
+long <- merged %>%
+  pivot_longer(
+    cols = c(BPXSY1, BPXSY2, BPXSY3, BPXSY4),
+    names_to = "reading",
+    values_to = "sbp"
+  ) %>%
+  filter(!is.na(sbp))
+
+dat <- long %>%
+  group_by(SEQN, RIDAGEYR, SMQ020) %>%
+  summarize(
+    sbp_mean = mean(sbp),
+    n_read = n(),
+    .groups = "drop"
+  )
+
+dat <- dat %>%
+  filter(RIDAGEYR >= 18) %>%
+  filter(SMQ020 == 1 | SMQ020 == 2) %>%
+  mutate(
+    group = ifelse(SMQ020 == 1, "Ever-smoker", "Never-smoker"),
+    age = RIDAGEYR
+  ) %>%
+  select(SEQN, group, sbp_mean, n_read, age)
+
+summary_table <- dat %>%
+  group_by(group) %>%
+  summarize(
+    n = n(),
+    mean_sbp = round(mean(sbp_mean), 2),
+    sd_sbp = round(sd(sbp_mean), 2)
+  )
+
+summary_table
+
+# Ever and Never groups
+ever <- dat %>% filter(group == "Ever-smoker")
+never <- dat %>% filter(group == "Never-smoker")
+n_E <- nrow(ever)
+n_N <- nrow(never)
+obs_diff <- mean(ever$sbp_mean) - mean(never$sbp_mean)
+```
+
+
+Graph 1: Side-by-side Boxplot of Systolic Blood Pressure by Smoking Status
+
+```{r}
+ggplot(dat, aes(x = group, y = sbp_mean, fill = group)) +
+  geom_boxplot() +
+  labs(title = "Systolic Blood Pressure by Smoking Status",
+    x = "Smoking Status",
+    y = "Systolic Blood Pressure (mmHg)") 
+```
+
+Independence: Each participant contributes one average systolic blood pressure value and belongs to only one smoking group. We treat observations as independent, although NHANES uses a complex survey design that is not accounted for in this analysis. This is a limitation.
+
+Normality: Both distributions are right-skewed, with several high-end outliers, including values above 200 mmHg. The sample sizes are 2,140 ever-smokers and 3,110 never-smokers. Under the independence assumption, these large sample sizes allow the Central Limit Theorem to support approximately normal sampling distributions of the means, despite the skewness of the individual observations.
+
+Variance: The sample standard deviations are 20.62 mmHg for ever-smokers and 19.65 mmHg for never-smokers, indicating similar spreads. We use Welch’s two-sample T-test, which does not require equal population variances.
+
+
+## Resampling hypothesis test
+
+We also conduct a resampling hypothesis test for the difference in population means.
+
+Under H0, the difference in population means is zero. Assuming smoking group labels are exchangeable under the null, we randomly shuffle the labels without replacement, preserving the original group sizes. For each shuffle, we calculate the difference in sample means.
+
+The hypotheses are:
+H0:mu_E-mu_N = 0, 
+H1:mu_E-mu_N != 0
+
+```{r}
+set.seed(240)
+
+null_diffs <- tibble(
+  diff = replicate(10000, {
+    shuffled_group <- sample(
+      dat$group, size = nrow(dat), replace = FALSE
+    )
+
+    mean(dat$sbp_mean[shuffled_group == "Ever-smoker"]) -
+      mean(dat$sbp_mean[shuffled_group == "Never-smoker"])
+  })
+)
+
+pvalue <- mean(abs(null_diffs$diff) >= abs(obs_diff))
+pvalue
+obs_diff
+
+
+ggplot(null_diffs, aes(x = diff)) +
+  geom_histogram(
+    bins = 45, fill = "dodgerblue", color = "black"
+  ) +
+  geom_vline(
+    xintercept = c(-abs(obs_diff), abs(obs_diff)),
+    color = "forestgreen",
+    linewidth = 1
+  ) +
+  labs(
+    title = "Graph 2: Null Distribution of the Difference in Means",
+    x = "Difference in mean systolic BP: E - N (mmHg)",
+    y = "Frequency"
+  )
+```
+
+The null distribution is approximately symmetric and centered near zero. The observed difference in sample means is 3.33 mmHg. pvalue is 0 which is smaller than 0.05 significance level, therefore we reject H0, there is evidence shows that there is a difference between the two groups.
+
+
+## Bootstrap Confidence Interval
+
+We construct a 95% bootstrap confidence interval for the difference in population mean systolic blood pressure.
+
+We independently resample participants with replacement within each smoking group, preserving the original group sizes. For each pair of bootstrap samples, we calculate the difference in sample means.
+
+```{r}
+set.seed(240)
+
+boot_diffs <- tibble(
+  ever_mean = replicate(10000,
+    mean(sample(ever$sbp_mean, size = n_E, replace = TRUE))
+  ),
+  never_mean = replicate(10000,
+    mean(sample(never$sbp_mean, size = n_N, replace = TRUE))
+  ),
+  diff = ever_mean - never_mean
+)
+
+# 95% bootstrap percentile CI
+conf <- 0.95
+
+m_lower <- quantile(boot_diffs$diff, (1 - conf) / 2)
+m_upper <- quantile(boot_diffs$diff, 1 - (1 - conf) / 2)
+
+bootstrap_ci <- c(2 * obs_diff - m_upper,2 * obs_diff - m_lower)
+
+bootstrap_ci
+
+
+ggplot(boot_diffs, aes(x = diff)) +
+  geom_histogram(
+    bins = 45, fill = "dodgerblue", color = "black"
+  ) +
+  geom_vline(
+    xintercept = bootstrap_ci,
+    color = "firebrick",
+    linetype = "dashed",
+    linewidth = 1
+  ) +
+  geom_vline(
+    xintercept = obs_diff,
+    color = "forestgreen",
+    linewidth = 1
+  ) +
+  labs(
+    title = "Graph 3: Bootstrap Distribution of the Difference in Means",
+    x = "Difference in mean systolic BP: E - N (mmHg)",
+    y = "Frequency"
+  ) 
+```
+
+The bootstrap distribution is approximately symmetric and centered near the observed difference of 3.33 mmHg.
+
+The 95% bootstrap confidence interval for mu_E − mu_N is: (2.22, 4.46) mmHg.We have 95% confidence that the population mean systolic blood pressure of ever-smokers is between 2.21 and 4.46 mmHg higher than that of never-smokers, under the assumptions of our analysis.
+
+
+## Two samples T-test
+
+We perform a Welch two-sample T-test to examine whether the population mean systolic blood pressure differs between ever-smokers and never-smokers. We use this test and its 95% confidence interval to assess whether the results are consistent with those obtained from the resampling methods.
+
+The hypotheses are:
+H0:mu_E-mu_N = 0, 
+H1:mu_E-mu_N != 0
+
+```{r}
+t.test(ever$sbp_mean,
+  never$sbp_mean,
+  alternative = "two.sided",
+  mu = 0,
+  var.equal = FALSE,
+  conf.level = 0.95)
+
+```
+
+Since the p-value is below 0.05, we reject H0. The data provide evidence that mean systolic blood pressure differs between the two groups. The Welch test agrees with the resampling test in rejecting H0 at the 0.05 significance level.
+
+Since the Welch T confidence interval(2.22,4.45) is very similar to the bootstrap confidence interval (2.22, 4.46). Both intervals lie entirely above zero, supporting the conclusion that ever-smokers have higher mean systolic blood pressure than never-smokers.
+
+The results of the Welch two-sample t-test are consistent with those from the resampling hypothesis test and the bootstrap confidence interval.
