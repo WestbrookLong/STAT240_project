@@ -4,15 +4,155 @@ output: html_document
 date: "`r Sys.Date()`"
 ---
 
+## Background
+
+```{r}
+
+library(nhanesA)
+library(dplyr)
+library(ggplot2)
+
+# 1. Download datasets
+bpx <- nhanes("BPX_J")
+smq <- nhanes("SMQ_J")
+demo <- nhanes("DEMO_J")
+
+# 2. Merge and prepare data
+
+df <- demo %>%
+  select(SEQN, RIDAGEYR) %>%
+  inner_join(
+    smq %>% select(SEQN, SMQ020),
+    by = "SEQN"
+  ) %>%
+  inner_join(
+    bpx %>% select(SEQN, BPXSY1, BPXSY2, BPXSY3),
+    by = "SEQN"
+  ) %>%
+  mutate(
+    smoking_response = as.character(SMQ020),
+    smoking = case_when(
+      smoking_response %in% c("1", "Yes") ~ "Ever-smokers",
+      smoking_response %in% c("2", "No") ~ "Never-smokers",
+      TRUE ~ NA_character_
+    ),
+    across(
+      c(BPXSY1, BPXSY2, BPXSY3),
+      ~ as.numeric(as.character(.x))
+    ),
+    mean_sbp = rowMeans(
+      pick(BPXSY1, BPXSY2, BPXSY3),
+      na.rm = TRUE
+    )
+  ) %>%
+  filter(
+    RIDAGEYR >= 20,
+    !is.na(smoking),
+    is.finite(mean_sbp),
+    mean_sbp > 0
+  )
+
+# Check results
+nrow(df)
+table(df$smoking)
+
+df %>%
+  group_by(smoking) %>%
+  summarise(
+    n = n(),
+    mean_sbp = mean(mean_sbp),
+    median_sbp = median(mean_sbp),
+    sd_sbp = sd(mean_sbp),
+    .groups = "drop"
+  )
+
+# 3. Calculate descriptive summaries
+
+summary_table <- df %>%
+  group_by(smoking) %>%
+  summarise(
+    n = n(),
+    group_mean = mean(mean_sbp),
+    group_median = median(mean_sbp),
+    group_sd = sd(mean_sbp),
+    .groups = "drop"
+  )
+
+print(summary_table)
 
 
+print(summary_table)
+
+# 4. Create the figure
+ggplot(df, aes(x = smoking, y = mean_sbp, fill = smoking)) +
+  geom_boxplot(width = 0.5, alpha = 0.55,
+               outlier.alpha = 0.3) +
+  stat_summary(
+    fun = mean,
+    geom = "point",
+    shape = 23,
+    size = 3.5,
+    fill = "white",
+    color = "black"
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Ever-smokers" = "#4477AA",
+      "Never-smokers" = "#66AA99"
+    )
+  ) +
+  labs(
+    title = "Systolic Blood Pressure by Smoking History",
+    subtitle = "U.S. adults aged 20+, NHANES 2017–2018",
+    x = "Smoking History",
+    y = "Average Systolic Blood Pressure (mmHg)",
+    caption = "White diamonds represent group means.\nSource: CDC NHANES 2017–2018"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(face = "bold")
+  )
+
+```
+
+### Data Source and Collection
+
+The data used in this study come from the 2017–2018 National Health and Nutrition Examination Survey (NHANES), conducted by the Centers for Disease Control and Prevention (CDC) through the National Center for Health Statistics (NCHS). NHANES collects information about the health and nutritional status of the U.S. population through household interviews and physical examinations conducted by trained health professionals.
+
+For this study, we use data from three NHANES datasets: Blood Pressure (BPX_J), Smoking – Cigarette Use (SMQ_J), and Demographics (DEMO_J). These datasets are combined using a unique participant identifier.
+
+The data are publicly available through the [CDC NHANES website](https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/default.aspx?BeginYear=2017).
+
+### Dataset and Key Variables
+
+Our study focuses on U.S. adults aged 20 and older who have available information on both smoking history and systolic blood pressure.
+
+The main variables are **systolic blood pressure** and **smoking history**.
+
+Systolic blood pressure measures the pressure in the arteries when the heart contracts, expressed in millimeters of mercury (mmHg). NHANES records up to three systolic blood pressure readings for each participant (BPXSY1, BPXSY2, and BPXSY3). We calculate the average of the available readings to obtain one blood pressure measurement per participant.
+
+Smoking history is determined by participants' responses to the question, "Have you smoked at least 100 cigarettes in your entire life?" (SMQ020). Participants who answered "Yes" are classified as *ever-smokers*, while those who answered "No" are classified as *never-smokers*.
+
+Each row in our final dataset represents one adult participant, including their age, smoking history, and average systolic blood pressure.
+
+Because some participants may have missing blood pressure measurements or smoking responses, only participants with the necessary information are included in the analysis.
+
+### Visualization and Observations
+
+Figure 1 compares the distribution of average systolic blood pressure between ever-smokers and never-smokers among 4,996 U.S. adults aged 20 and older in the NHANES 2017–2018 dataset.
+
+Ever-smokers have a slightly higher mean systolic blood pressure (128.47 mmHg) than never-smokers (126.17 mmHg), with an observed difference of approximately 2.30 mmHg. The median values show a similar pattern, at 125 mmHg and 123 mmHg, respectively.
+
+However, the two distributions overlap substantially, and both groups show considerable variation in blood pressure. The standard deviations are approximately 20.6 mmHg for ever-smokers and 19.8 mmHg for never-smokers. Both groups also contain individuals with unusually high blood pressure measurements.
+
+Overall, the visualization suggests a small difference in average systolic blood pressure between the two groups, while highlighting substantial variation within each group. This provides a basis for further investigation into whether the observed difference is also present in the broader U.S. adult population.
 
 # Statistical Analysis
 
 ## Parameters of interest
 
 Our research question is: Is there a difference in mean systolic blood pressure between ever-smokers and never-smokers among U.S. adults aged 18 and older?
-
 
 Let:
 
@@ -22,15 +162,14 @@ mu_N = the population mean systolic blood pressure of never-smokers.
 
 The parameter of interest is **mu_E-mu_N**, which is the difference in population means.
 
-
 ## Inference method and hypotheses
 
 We use a **resampling hypothesis test at alpha = 0.05**, **together with a 95% bootstrap confidence interval**, to examine the difference in population mean systolic blood pressure between ever-smokers and never-smokers. We then use a **Welch two-sample t-test and its 95% confidence interval** to assess whether the results are consistent with those obtained from the resampling methods.
 
 So we have H0:mu_E-mu_N = 0, H1:mu_E-mu_N != 0
 
-
 ## Assumption checks
+
 We assess the assumptions of the two-sample T-test using the sample sizes and distributions of systolic blood pressure in each group.
 
 ```{r}
@@ -92,7 +231,6 @@ n_N <- nrow(never)
 obs_diff <- mean(ever$sbp_mean) - mean(never$sbp_mean)
 ```
 
-
 Graph 1: Side-by-side Boxplot of Systolic Blood Pressure by Smoking Status
 
 ```{r}
@@ -109,16 +247,13 @@ Normality: Both distributions are right-skewed, with several high-end outliers, 
 
 Variance: The sample standard deviations are 20.62 mmHg for ever-smokers and 19.65 mmHg for never-smokers, indicating similar spreads. We use Welch’s two-sample T-test, which does not require equal population variances.
 
-
 ## Resampling hypothesis test
 
 We also conduct a resampling hypothesis test for the difference in population means.
 
 Under H0, the difference in population means is zero. Assuming smoking group labels are exchangeable under the null, we randomly shuffle the labels without replacement, preserving the original group sizes. For each shuffle, we calculate the difference in sample means.
 
-The hypotheses are:
-H0:mu_E-mu_N = 0, 
-H1:mu_E-mu_N != 0
+The hypotheses are: H0:mu_E-mu_N = 0, H1:mu_E-mu_N != 0
 
 ```{r}
 set.seed(240)
@@ -156,7 +291,6 @@ ggplot(null_diffs, aes(x = diff)) +
 ```
 
 The null distribution is approximately symmetric and centered near zero. The observed difference in sample means is 3.33 mmHg. pvalue is 0 which is smaller than 0.05 significance level, therefore we reject H0, there is evidence shows that there is a difference between the two groups.
-
 
 ## Bootstrap Confidence Interval
 
@@ -214,14 +348,11 @@ The bootstrap distribution is approximately symmetric and centered near the obse
 
 The 95% bootstrap confidence interval for mu_E − mu_N is: (2.22, 4.46) mmHg.We have 95% confidence that the population mean systolic blood pressure of ever-smokers is between 2.21 and 4.46 mmHg higher than that of never-smokers, under the assumptions of our analysis.
 
-
 ## Two samples T-test
 
 We perform a Welch two-sample T-test to examine whether the population mean systolic blood pressure differs between ever-smokers and never-smokers. We use this test and its 95% confidence interval to assess whether the results are consistent with those obtained from the resampling methods.
 
-The hypotheses are:
-H0:mu_E-mu_N = 0, 
-H1:mu_E-mu_N != 0
+The hypotheses are: H0:mu_E-mu_N = 0, H1:mu_E-mu_N != 0
 
 ```{r}
 t.test(ever$sbp_mean,
