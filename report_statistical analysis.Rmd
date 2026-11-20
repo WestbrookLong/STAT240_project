@@ -140,17 +140,13 @@ Because some participants may have missing blood pressure measurements or smokin
 
 ### Visualization and Observations
 
-**Figure 1. Distribution of Average Systolic Blood Pressure by Smoking History**
+Figure 1 compares the distribution of average systolic blood pressure between ever-smokers and never-smokers among 4,996 U.S. adults aged 20 and older in the NHANES 2017–2018 dataset.
 
-[Insert side-by-side boxplot with mean markers here.]
+Ever-smokers have a slightly higher mean systolic blood pressure (128.47 mmHg) than never-smokers (126.17 mmHg), with an observed difference of approximately 2.30 mmHg. The median values show a similar pattern, at 125 mmHg and 123 mmHg, respectively.
 
-Figure 1 compares the distribution of average systolic blood pressure between ever-smokers and never-smokers. The boxplots illustrate the variation in blood pressure within each group, while the highlighted markers indicate their respective average values.
+However, the two distributions overlap substantially, and both groups show considerable variation in blood pressure. The standard deviations are approximately 20.6 mmHg for ever-smokers and 19.8 mmHg for never-smokers. Both groups also contain individuals with unusually high blood pressure measurements.
 
-The mean systolic blood pressure is **[X] mmHg** among ever-smokers and **[Y] mmHg** among never-smokers, representing an observed difference of **[X − Y] mmHg**.
-
-[Describe whether one group has a higher mean, how much the distributions overlap, and whether there are noticeable differences in variability or unusual observations.]
-
-This comparison provides an initial understanding of how systolic blood pressure differs between the two groups and motivates further investigation into whether the observed difference reflects a broader pattern among U.S. adults.
+Overall, the visualization suggests a small difference in average systolic blood pressure between the two groups, while highlighting substantial variation within each group. This provides a basis for further investigation into whether the observed difference is also present in the broader U.S. adult population.
 
 # Statistical Analysis
 
