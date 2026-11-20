@@ -6,6 +6,44 @@ date: "`r Sys.Date()`"
 
 
 
+## Background
+
+### Data Source and Collection
+
+The data used in this study come from the 2017–2018 National Health and Nutrition Examination Survey (NHANES), conducted by the Centers for Disease Control and Prevention (CDC) through the National Center for Health Statistics (NCHS). NHANES collects information about the health and nutritional status of the U.S. population through household interviews and physical examinations conducted by trained health professionals.
+
+For this study, we use data from three NHANES datasets: Blood Pressure (BPX_J), Smoking – Cigarette Use (SMQ_J), and Demographics (DEMO_J). These datasets are combined using a unique participant identifier.
+
+The data are publicly available through the [CDC NHANES website](https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/default.aspx?BeginYear=2017).
+
+### Dataset and Key Variables
+
+Our study focuses on U.S. adults aged 20 and older who have available information on both smoking history and systolic blood pressure.
+
+The main variables are **systolic blood pressure** and **smoking history**.
+
+Systolic blood pressure measures the pressure in the arteries when the heart contracts, expressed in millimeters of mercury (mmHg). NHANES records up to three systolic blood pressure readings for each participant (BPXSY1, BPXSY2, and BPXSY3). We calculate the average of the available readings to obtain one blood pressure measurement per participant.
+
+Smoking history is determined by participants' responses to the question, "Have you smoked at least 100 cigarettes in your entire life?" (SMQ020). Participants who answered "Yes" are classified as *ever-smokers*, while those who answered "No" are classified as *never-smokers*.
+
+Each row in our final dataset represents one adult participant, including their age, smoking history, and average systolic blood pressure.
+
+Because some participants may have missing blood pressure measurements or smoking responses, only participants with the necessary information are included in the analysis.
+
+### Visualization and Observations
+
+**Figure 1. Distribution of Average Systolic Blood Pressure by Smoking History**
+
+[Insert side-by-side boxplot with mean markers here.]
+
+Figure 1 compares the distribution of average systolic blood pressure between ever-smokers and never-smokers. The boxplots illustrate the variation in blood pressure within each group, while the highlighted markers indicate their respective average values.
+
+The mean systolic blood pressure is **[X] mmHg** among ever-smokers and **[Y] mmHg** among never-smokers, representing an observed difference of **[X − Y] mmHg**.
+
+[Describe whether one group has a higher mean, how much the distributions overlap, and whether there are noticeable differences in variability or unusual observations.]
+
+This comparison provides an initial understanding of how systolic blood pressure differs between the two groups and motivates further investigation into whether the observed difference reflects a broader pattern among U.S. adults.
+
 
 # Statistical Analysis
 
